@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -33,25 +34,18 @@ namespace genshin_audio_exporter
             StatusTextBox.AppendText($"{((text.Length> 0 && prefix) ? "> " + text : "  " + text)}" + Environment.NewLine);
         }
 
-        private void BrowsePckFolder(object sender, EventArgs e)
+        private void BrowsePckFiles(object sender, EventArgs e)
         {
-            CommonOpenFileDialog cofd = new CommonOpenFileDialog {
-                IsFolderPicker = true
-            };
-            CommonFileDialogResult fbdResult = cofd.ShowDialog();
-            if (fbdResult == CommonFileDialogResult.Ok)
+            OpenFileDialog ofd = new OpenFileDialog
             {
-                int PckFileCount = Directory.GetFiles(cofd.FileName, "*.pck").Length;
-                if (PckFileCount > 0)
-                {
-                    AppVariables.PckFileDir = cofd.FileName;
-                    PckFileDirTextBox.Text = cofd.FileName;
-                }
-                else
-                {
-                    MessageBox.Show("The selected directory does not contain any PCK files. Please choose a different one.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    PckDirectoryBrowseButton.PerformClick();
-                }
+                Filter = "PCK files (*.pck)|*.pck",
+                Multiselect = true
+            };
+            var ofdResult = ofd.ShowDialog();
+            if (ofdResult == DialogResult.OK)
+            {
+                AppVariables.PckFiles = ofd.FileNames.ToList();
+                PckFileDirTextBox.Text = string.Join(" ", ofd.SafeFileNames);
             }
             UpdateCanExportStatus();
         }
@@ -89,7 +83,7 @@ namespace genshin_audio_exporter
 
             if (!AppVariables.CreateWav && !AppVariables.CreateMp3 && !AppVariables.CreateOgg && !AppVariables.CreateFlac)
                 canExport = false;
-            if (!Directory.Exists(PckFileDirTextBox.Text) || !Directory.Exists(OutputDirTextBox.Text))
+            if (string.IsNullOrEmpty(PckFileDirTextBox.Text) || !Directory.Exists(OutputDirTextBox.Text))
                 canExport = false;
             if (canExport)
             {
@@ -97,16 +91,6 @@ namespace genshin_audio_exporter
                 Properties.Settings.Default.CreateMp3 = AppVariables.CreateMp3;
                 Properties.Settings.Default.CreateOgg = AppVariables.CreateOgg;
                 Properties.Settings.Default.CreateFlac = AppVariables.CreateFlac;
-                if (Directory.GetFiles(PckFileDirTextBox.Text).Length>0)
-                {
-                    Properties.Settings.Default.PckFileDirectory = PckFileDirTextBox.Text;
-                    AppVariables.PckFileDir = PckFileDirTextBox.Text;
-                }
-                else
-                {
-                    PckFileDirTextBox.Clear();
-                    canExport = false;
-                }
 
                 AppVariables.OutputDir = OutputDirTextBox.Text;
                 Properties.Settings.Default.OutputDirectory = OutputDirTextBox.Text;
@@ -144,7 +128,11 @@ namespace genshin_audio_exporter
                 CurrentExportProgressBar.Maximum = 0;
                 int index = 0;
                 int overallIndex = 0;
-                AppVariables.PckFiles = Directory.GetFiles(AppVariables.PckFileDir, "*.pck").ToList();
+                CheckMissingFiles();
+                if(AppVariables.PckFiles.Count == 0)
+                {
+                    isAborted = true;
+                }
                 Directory.CreateDirectory(AppVariables.ProcessingDir);
                 Directory.CreateDirectory(Path.Combine(AppVariables.ProcessingDir, "wem"));
                 if (AppVariables.CreateWav)
@@ -325,6 +313,31 @@ namespace genshin_audio_exporter
                 WriteStatus($"Task has been aborted, {exportedAudioFiles} audio files were exported", prefix: false);
             WriteStatus("");
             exportedAudioFiles = 0;
+        }
+
+        private void CheckMissingFiles()
+        {
+            List<string> missingFiles = new List<string>();
+            foreach (string filePath in AppVariables.PckFiles)
+            {
+                if (!File.Exists(filePath))
+                {
+                    missingFiles.Add(filePath);
+                }
+            }
+            if (missingFiles.Count == AppVariables.PckFiles.Count)
+            {
+                MessageBox.Show(this, "All .PCK files are missing", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                PckFileDirTextBox.Clear();
+            }
+            else if (missingFiles.Count > 0)
+            {
+                MessageBox.Show(this, "The following .PCK files are missing:\n\n" + string.Join("\n", missingFiles), "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            foreach (string missingFile in missingFiles)
+            {
+                AppVariables.PckFiles.Remove(missingFile);
+            }
         }
 
         private static void ClearTempDirectories()

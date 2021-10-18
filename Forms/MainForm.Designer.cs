@@ -153,7 +153,7 @@ namespace genshin_audio_exporter
             this.PckDirectoryBrowseButton.TabIndex = 3;
             this.PckDirectoryBrowseButton.Text = "Browse...";
             this.PckDirectoryBrowseButton.UseVisualStyleBackColor = true;
-            this.PckDirectoryBrowseButton.Click += new System.EventHandler(this.BrowsePckFolder);
+            this.PckDirectoryBrowseButton.Click += new System.EventHandler(this.BrowsePckFiles);
             // 
             // PckFileDirTextBox
             // 
