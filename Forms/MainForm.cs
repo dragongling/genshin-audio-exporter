@@ -33,7 +33,7 @@ namespace genshin_audio_exporter
             StatusTextBox.AppendText($"{((text.Length> 0 && prefix) ? "> " + text : "  " + text)}" + Environment.NewLine);
         }
 
-        private void BrowsePckFolder(object sender, EventArgs e)
+        private void BrowsePckFiles(object sender, EventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
