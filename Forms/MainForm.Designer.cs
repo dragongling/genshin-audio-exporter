@@ -168,9 +168,9 @@ namespace genshin_audio_exporter
             this.PckDirectoryLabel.AutoSize = true;
             this.PckDirectoryLabel.Location = new System.Drawing.Point(6, 26);
             this.PckDirectoryLabel.Name = "PckDirectoryLabel";
-            this.PckDirectoryLabel.Size = new System.Drawing.Size(96, 13);
+            this.PckDirectoryLabel.Size = new System.Drawing.Size(59, 13);
             this.PckDirectoryLabel.TabIndex = 1;
-            this.PckDirectoryLabel.Text = "PCK file directory:";
+            this.PckDirectoryLabel.Text = "PCK file(s):";
             // 
             // FormatWavCheckBox
             // 
