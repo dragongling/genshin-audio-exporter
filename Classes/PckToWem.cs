@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -8,7 +9,7 @@ namespace genshin_audio_exporter
 {
     public class PckToWem
     {
-        public static void StartPckToWem(string inputFile, MainForm callback)
+        public static void StartPckToWem(string inputFile)
         {
             Process pckToWemProcess;
             string quickBmsPath = Path.Combine(AppVariables.LibsDir, "quickbms.exe");
@@ -34,7 +35,7 @@ namespace genshin_audio_exporter
                 }
                 catch (Exception ex)
                 {
-                    callback.WriteStatus($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
+                    LogManager.GetCurrentClassLogger().Info($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
                     MessageBox.Show($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 }

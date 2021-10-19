@@ -44,7 +44,7 @@ namespace genshin_audio_exporter
             this.PckDirectoryLabel = new System.Windows.Forms.Label();
             this.FormatWavCheckBox = new System.Windows.Forms.CheckBox();
             this.StatusGroupBox = new System.Windows.Forms.GroupBox();
-            this.StatusTextBox = new System.Windows.Forms.TextBox();
+            this.StatusTextBox = new System.Windows.Forms.RichTextBox();
             this.ExportButton = new System.Windows.Forms.Button();
             this.OverallExportProgressBar = new System.Windows.Forms.ProgressBar();
             this.CurrentExportProgressBar = new System.Windows.Forms.ProgressBar();
@@ -200,10 +200,9 @@ namespace genshin_audio_exporter
             // 
             this.StatusTextBox.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.StatusTextBox.Location = new System.Drawing.Point(6, 21);
-            this.StatusTextBox.Multiline = true;
             this.StatusTextBox.Name = "StatusTextBox";
             this.StatusTextBox.ReadOnly = true;
-            this.StatusTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.StatusTextBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.StatusTextBox.Size = new System.Drawing.Size(548, 148);
             this.StatusTextBox.TabIndex = 0;
             // 
@@ -263,10 +262,10 @@ namespace genshin_audio_exporter
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "genshin-audio-exporter";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CloseApplication);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.SettingsGroupBox.ResumeLayout(false);
             this.SettingsGroupBox.PerformLayout();
             this.StatusGroupBox.ResumeLayout(false);
-            this.StatusGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -288,7 +287,7 @@ namespace genshin_audio_exporter
         private System.Windows.Forms.GroupBox StatusGroupBox;
         private System.Windows.Forms.Button ExportButton;
         private System.Windows.Forms.ProgressBar OverallExportProgressBar;
-        internal System.Windows.Forms.TextBox StatusTextBox;
+        internal System.Windows.Forms.RichTextBox StatusTextBox;
         private System.Windows.Forms.ProgressBar CurrentExportProgressBar;
         private System.Windows.Forms.ToolTip ExportProgressToolTip;
     }
