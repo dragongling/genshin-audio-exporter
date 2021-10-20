@@ -6,6 +6,7 @@ using NLog.Targets.Wrappers;
 using NLog.Windows.Forms;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -290,19 +291,22 @@ namespace genshin_audio_exporter
             }
         }
 
-        private static void ClearTempDirectories()
+        private void ClearTempDirectories()
         {
-            while (Process.GetProcessesByName("quickbms").Length>0)
-                foreach (var process in Process.GetProcessesByName("quickbms"))
-                    process.Kill();
-
-            while (Process.GetProcessesByName("vgmstream-cli").Length>0)
-                foreach (var process in Process.GetProcessesByName("vgmstream-cli"))
-                    process.Kill();
-
-            while (Process.GetProcessesByName("ffmpeg").Length>0)
-                foreach (var process in Process.GetProcessesByName("ffmpeg"))
-                    process.Kill();
+            string[] processesToKill = new string[] { "quickbms", "vgmstream-cli", "ffmpeg" };
+            foreach (var processName in processesToKill)
+            {
+                try
+                {
+                    while (Process.GetProcessesByName(processName).Length > 0)
+                        foreach (var process in Process.GetProcessesByName(processName))
+                            process.Kill();
+                }
+                catch (Win32Exception)
+                {
+                    WriteStatus($"Couldn't stop process \"{processName}\", please stop it manually.");
+                }
+            }
 
             DirectoryInfo processingDir = new DirectoryInfo(AppVariables.ProcessingDir);
             foreach (FileInfo file in processingDir.GetFiles()) file.Delete();
