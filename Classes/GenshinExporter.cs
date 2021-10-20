@@ -3,18 +3,17 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace genshin_audio_exporter.Classes
 {
     class GenshinExporter
     {
-        private bool isBusy = false;
-        private bool isAborted = false;
         public int exportedAudioFiles = 0;
         readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        public async Task<int> ExportPcksToWem(IProgress<int> progress)
+        public async Task<int> ExportPcksToWem(IProgress<int> progress, CancellationToken? ct = null)
         {
             WriteStatus("Exporting PCK  =>  WEM  (Required)", prefix: false);
             WriteStatus("");
@@ -23,21 +22,17 @@ namespace genshin_audio_exporter.Classes
             {
                 foreach (string pckFile in AppVariables.PckFiles)
                 {
-                    if (!isAborted)
-                    {
-                        PckToWem.StartPckToWem(pckFile);
-                        WriteStatus($"{Path.GetFileName(pckFile)}  =>  {Path.GetFileNameWithoutExtension(pckFile)}.wem");
-                        index += 1;
-                        progress.Report(index);
-                    }
-                    else
-                        break;
+                    ct?.ThrowIfCancellationRequested();
+                    PckToWem.StartPckToWem(pckFile);
+                    WriteStatus($"{Path.GetFileName(pckFile)}  =>  {Path.GetFileNameWithoutExtension(pckFile)}.wem");
+                    index += 1;
+                    progress?.Report(index);
                 }
             });
             return index;
         }
 
-        public async Task ExportWemsToWavs(int overallIndex, IProgress<int> progress)
+        public async Task ExportWemsToWavs(int overallIndex, IProgress<int> progress, CancellationToken? ct = null)
         {
             WriteStatus("");
             WriteStatus("Exporting WEM  =>  WAV  (Required)", prefix: false);
@@ -47,21 +42,17 @@ namespace genshin_audio_exporter.Classes
             {
                 foreach (string wemFile in AppVariables.WemFiles)
                 {
-                    if (!isAborted)
-                    {
-                        WemToWav.StartWemToWav(wemFile);
-                        WriteStatus($"{Path.GetFileName(wemFile)}  =>  {Path.GetFileNameWithoutExtension(wemFile)}.wav");
-                        index += 1;
-                        overallIndex += 1;
-                        progress.Report(index);
-                    }
-                    else
-                        break;
+                    ct?.ThrowIfCancellationRequested();
+                    WemToWav.StartWemToWav(wemFile);
+                    WriteStatus($"{Path.GetFileName(wemFile)}  =>  {Path.GetFileNameWithoutExtension(wemFile)}.wav");
+                    index += 1;
+                    overallIndex += 1;
+                    progress.Report(index);
                 }
             });
         }
 
-        public async Task ExportAudioFormat(string format, IProgress<int> progress)
+        public async Task ExportAudioFormat(string format, IProgress<int> progress, CancellationToken? ct)
         {
             Directory.CreateDirectory(Path.Combine(AppVariables.OutputDir, format));
             int index = 0;
@@ -77,21 +68,17 @@ namespace genshin_audio_exporter.Classes
             {
                 foreach (string wavFile in AppVariables.WavFiles)
                 {
-                    if (!isAborted)
-                    {
-                        if (format != "wav")
-                            WavConverter.ConvertWav(wavFile, format);
-                        string srcFile = Path.Combine(AppVariables.ProcessingDir, format, Path.GetFileNameWithoutExtension(wavFile) + $".{format}");
-                        string destFile = Path.Combine(AppVariables.OutputDir, format, Path.GetFileNameWithoutExtension(wavFile) + $".{format}");
+                    ct?.ThrowIfCancellationRequested();
+                    if (format != "wav")
+                        WavConverter.ConvertWav(wavFile, format);
+                    string srcFile = Path.Combine(AppVariables.ProcessingDir, format, Path.GetFileNameWithoutExtension(wavFile) + $".{format}");
+                    string destFile = Path.Combine(AppVariables.OutputDir, format, Path.GetFileNameWithoutExtension(wavFile) + $".{format}");
 
-                        File.Copy(srcFile, destFile, true);
-                        WriteStatus($"{Path.GetFileName(wavFile)}  =>  {Path.GetFileName(srcFile)}");
-                        exportedAudioFiles += 1;
-                        index += 1;
-                        progress.Report(index);
-                    }
-                    else
-                        break;
+                    File.Copy(srcFile, destFile, true);
+                    WriteStatus($"{Path.GetFileName(wavFile)}  =>  {Path.GetFileName(srcFile)}");
+                    exportedAudioFiles += 1;
+                    index += 1;
+                    progress.Report(index);
                 }
             });
         }
