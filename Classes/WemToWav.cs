@@ -1,12 +1,8 @@
 ﻿using NLog;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace genshin_audio_exporter
@@ -39,7 +35,7 @@ namespace genshin_audio_exporter
                 }
                 catch (Exception ex)
                 {
-                    LogManager.GetCurrentClassLogger().Info($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
+                    LogManager.GetCurrentClassLogger().Error($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
                     MessageBox.Show($"Could not start vgmstream-cli.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 }

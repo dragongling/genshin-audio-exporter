@@ -2,6 +2,7 @@
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NLog;
 using NLog.Config;
+using NLog.LayoutRenderers;
 using NLog.Targets.Wrappers;
 using NLog.Windows.Forms;
 using System;
@@ -39,26 +40,17 @@ namespace genshin_audio_exporter
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            LayoutRenderer.Register("prefix", (logEvent) => logEvent.Level == LogLevel.Debug ? "> " : "  ");
             RichTextBoxTarget target = new RichTextBoxTarget
             {
                 Name = "RichTextBox",
-                Layout = "${message}",
+                Layout = "${prefix}${message}",
                 ControlName = "StatusTextBox",
                 FormName = "MainForm",
                 AutoScroll = true,
                 MaxLines = 10000,
                 UseDefaultRowColoringRules = false
             };
-            target.RowColoringRules.Add(
-                new RichTextBoxRowColoringRule(
-                    "level == LogLevel.Trace", // condition
-                    "DarkGray", // font color
-                    "Control", // background color
-                    FontStyle.Regular
-                )
-            );
-            target.RowColoringRules.Add(new RichTextBoxRowColoringRule("level == LogLevel.Debug", "Gray", "Control"));
-            target.RowColoringRules.Add(new RichTextBoxRowColoringRule("level == LogLevel.Info", "ControlText", "Control"));
             target.RowColoringRules.Add(new RichTextBoxRowColoringRule("level == LogLevel.Warn", "DarkRed", "Control"));
             target.RowColoringRules.Add(new RichTextBoxRowColoringRule("level == LogLevel.Error", "White", "DarkRed", FontStyle.Bold));
             target.RowColoringRules.Add(new RichTextBoxRowColoringRule("level == LogLevel.Fatal", "Yellow", "DarkRed", FontStyle.Bold));
@@ -68,12 +60,7 @@ namespace genshin_audio_exporter
                 Name = "AsyncRichTextBox",
                 WrappedTarget = target
             };
-            SimpleConfigurator.ConfigureForTargetLogging(asyncWrapper, LogLevel.Info);
-        }
-
-        public void WriteStatus(string text, bool prefix = true)
-        {
-            logger.Info($"{((text.Length > 0 && prefix) ? "> " + text : "  " + text)}");
+            SimpleConfigurator.ConfigureForTargetLogging(asyncWrapper, LogLevel.Debug);
         }
 
         private void BrowsePckFiles(object sender, EventArgs e)
@@ -151,15 +138,15 @@ namespace genshin_audio_exporter
                 {
                     exportTokenSource = new CancellationTokenSource();
                     await Export(exportTokenSource.Token);
-                    WriteStatus("");
-                    WriteStatus($"{exporter.exportedAudioFiles} audio files have been exported ({AppVariables.WavFiles.Count} unique sounds)", prefix: false);
-                    WriteStatus("");
+                    logger.Info("");
+                    logger.Info($"{exporter.exportedAudioFiles} audio files have been exported ({AppVariables.WavFiles.Count} unique sounds)");
+                    logger.Info("");
                 }
                 catch (OperationCanceledException)
                 {
-                    WriteStatus("");
-                    WriteStatus($"Task has been aborted, {exporter.exportedAudioFiles} audio files were exported", prefix: false);
-                    WriteStatus("");
+                    logger.Info("");
+                    logger.Info($"Task has been aborted, {exporter.exportedAudioFiles} audio files were exported");
+                    logger.Info("");
                 }
                 finally
                 {
@@ -194,8 +181,8 @@ namespace genshin_audio_exporter
             StatusTextBox.Clear();
             if (!AppResources.IsUnpacked)
             {
-                WriteStatus("Unpacking libraries", prefix: false);
-                WriteStatus("");
+                logger.Info("Unpacking libraries");
+                logger.Info("");
                 await Task.Run(() =>
                 {
                     AppResources.UnpackResources();
@@ -209,7 +196,7 @@ namespace genshin_audio_exporter
             CheckMissingFiles();
             if (AppVariables.PckFiles.Count == 0)
             {
-                WriteStatus("No .PCK files to process");
+                logger.Warn("No .PCK files to process");
                 return;
             }
             Directory.CreateDirectory(AppVariables.ProcessingDir);
@@ -304,7 +291,7 @@ namespace genshin_audio_exporter
                 }
                 catch (Win32Exception)
                 {
-                    WriteStatus($"Couldn't stop process \"{processName}\", please stop it manually.");
+                    logger.Warn($"Couldn't stop process \"{processName}\", please stop it manually.");
                 }
             }
 
