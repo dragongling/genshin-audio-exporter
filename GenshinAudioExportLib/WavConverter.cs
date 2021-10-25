@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics;
-using System.IO;
 
-namespace genshin_audio_exporter
+namespace GenshinAudioExportLib
 {
-    public class WavConverter
+    class WavConverter
     {
         private readonly string ffmpegPath;
 

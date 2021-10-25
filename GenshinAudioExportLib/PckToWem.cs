@@ -2,12 +2,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
 
-namespace genshin_audio_exporter
+namespace GenshinAudioExportLib
 {
-    public class PckToWem
+    class PckToWem
     {
         private readonly string quickBmsPath, waveScanBmsPath;
 
@@ -23,7 +21,6 @@ namespace genshin_audio_exporter
             Directory.CreateDirectory(outputDirectory);
             var startInfo = new ProcessStartInfo(quickBmsPath)
             {
-                WorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 Arguments = $"\"{waveScanBmsPath}\" \"{inputFile}\" \"{outputDirectory}\"",
                 CreateNoWindow = true,
                 UseShellExecute = false,
@@ -40,7 +37,6 @@ namespace genshin_audio_exporter
                 catch (Exception ex)
                 {
                     LogManager.GetCurrentClassLogger().Error($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
-                    MessageBox.Show($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

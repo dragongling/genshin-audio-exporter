@@ -1,4 +1,4 @@
-﻿using genshin_audio_exporter.Classes;
+﻿using GenshinAudioExportLib;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NLog;
 using NLog.Config;
@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -20,7 +21,9 @@ namespace genshin_audio_exporter
     {
         private bool doUpdateFormatSettings = false;
         private bool isBusy = false;
-        private readonly GenshinExporter exporter = new GenshinExporter();
+
+        private static readonly string LibsDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "libs");
+        private readonly GenshinExporter exporter = new GenshinExporter(LibsDir);
         private readonly Logger logger = LogManager.GetCurrentClassLogger();
         private CancellationTokenSource exportTokenSource;
 
@@ -158,13 +161,13 @@ namespace genshin_audio_exporter
                         GetFormatsToExport(),
                         exportTokenSource.Token);
                     logger.Info("");
-                    logger.Info($"{exporter.exportedAudioFiles} audio files have been exported ({wavCount} unique sounds)");
+                    logger.Info($"{exporter.AudioFilesExported} audio files have been exported ({wavCount} unique sounds)");
                     logger.Info("");
                 }
                 catch (OperationCanceledException)
                 {
                     logger.Info("");
-                    logger.Info($"Task has been aborted, {exporter.exportedAudioFiles} audio files were exported");
+                    logger.Info($"Task has been aborted, {exporter.AudioFilesExported} audio files were exported");
                     logger.Info("");
                     exporter.KillProcesses();
                 }
@@ -183,7 +186,7 @@ namespace genshin_audio_exporter
                     exporter.KillProcesses();
                     exporter.ClearTempDirectories();
                     isBusy = false;
-                    exporter.exportedAudioFiles = 0;
+                    exporter.AudioFilesExported = 0;
                 }
             }
             else
@@ -214,25 +217,26 @@ namespace genshin_audio_exporter
             exporter.OutputDir = OutputDir;
             exporter.ProcessingDir = Path.Combine(OutputDir, "processing");
             Directory.CreateDirectory(exporter.ProcessingDir);
+            exporter.CancelToken = ct;
             exporter.KillProcesses();
-            await exporter.UnpackLibs();
+            await UnpackLibs();
 
             ct?.ThrowIfCancellationRequested();
 
-            IProgress<int> progress = new Progress<int>(value =>
+            exporter.progress = new Progress<int>(value =>
             {
                 CurrentExportProgressBar.Maximum = PckFiles.Count;
                 CurrentExportProgressBar.Value = value;
             });
             
-            await exporter.ExportPcksToWem(PckFiles, progress, ct);
+            await exporter.ExportPcksToWem(PckFiles);
 
             ct?.ThrowIfCancellationRequested();
 
             List<string> WemFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wem"), "*.wem").ToList();
             int overallIndex = 0;
 
-            progress = new Progress<int>(value =>
+            exporter.progress = new Progress<int>(value =>
             {
                 CurrentExportProgressBar.Maximum = WemFiles.Count;
                 CurrentExportProgressBar.Value = value;
@@ -241,22 +245,36 @@ namespace genshin_audio_exporter
                 OverallExportProgressBar.Value = overallIndex;
             });
 
-            int wavCount = await exporter.ExportWemsToWavs(WemFiles, overallIndex, progress, ct);
+            int wavCount = await exporter.ExportWemsToWavs(WemFiles, overallIndex);
 
             List<string> WavFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wav"), "*.wav").ToList();
             foreach (var format in ExportFormats)
             {
                 ct?.ThrowIfCancellationRequested();
-                progress = new Progress<int>(value =>
+                exporter.progress = new Progress<int>(value =>
                 {
                     CurrentExportProgressBar.Maximum = WavFiles.Count;
                     CurrentExportProgressBar.Value = value;
                     OverallExportProgressBar.Value = overallIndex;
                 });
-                await exporter.ExportAudioFormat(WavFiles, format, progress, ct);
+                await exporter.ExportAudioFormat(WavFiles, format);
             }
 
             return wavCount;
+        }
+
+        public async Task UnpackLibs()
+        {
+            Directory.CreateDirectory(LibsDir);
+            if (!AppResources.IsUnpacked)
+            {
+                logger.Info("Unpacking libraries");
+                logger.Info("");
+                await Task.Run(() =>
+                {
+                    AppResources.UnpackResources();
+                });
+            }
         }
 
         private void CloseApplication(object sender, FormClosingEventArgs e)

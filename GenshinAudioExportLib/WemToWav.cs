@@ -1,13 +1,10 @@
 ﻿using NLog;
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
 
-namespace genshin_audio_exporter
+namespace GenshinAudioExportLib
 {
-    public class WemToWav
+    class WemToWav
     {
         private readonly string vgmstreamPath;
 
@@ -21,7 +18,6 @@ namespace genshin_audio_exporter
             Process wemToWavProcess;
             var startInfo = new ProcessStartInfo(vgmstreamPath)
             {
-                WorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 Arguments = $"-o \"{outputFilePath}\" \"{inputFile}\"",
                 CreateNoWindow = true,
                 UseShellExecute = false,
@@ -34,12 +30,10 @@ namespace genshin_audio_exporter
                     wemToWavProcess.StartInfo = startInfo;
                     wemToWavProcess.Start();
                     wemToWavProcess.WaitForExit();
-
                 }
                 catch (Exception ex)
                 {
-                    LogManager.GetCurrentClassLogger().Error($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
-                    MessageBox.Show($"Could not start vgmstream-cli.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    LogManager.GetCurrentClassLogger().Error($"Could not start \"quickbms.exe\" or \"vgmstream-cli.exe\":\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
                 }
             }
         }
