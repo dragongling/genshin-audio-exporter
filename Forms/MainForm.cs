@@ -7,8 +7,6 @@ using NLog.Targets.Wrappers;
 using NLog.Windows.Forms;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -25,6 +23,17 @@ namespace genshin_audio_exporter
         private readonly GenshinExporter exporter = new GenshinExporter();
         private readonly Logger logger = LogManager.GetCurrentClassLogger();
         private CancellationTokenSource exportTokenSource;
+
+        public static Dictionary<string, bool> ExportFormats = new Dictionary<string, bool> {
+            { "wem", false },
+            { "wav", false },
+            { "mp3", false },
+            { "ogg", false },
+            { "flac", false }
+        };
+
+        List<string> PckFiles;
+        string OutputDir;
 
         public MainForm()
         {
@@ -73,7 +82,7 @@ namespace genshin_audio_exporter
             var ofdResult = ofd.ShowDialog();
             if (ofdResult == DialogResult.OK)
             {
-                AppVariables.PckFiles = ofd.FileNames.ToList();
+                PckFiles = ofd.FileNames.ToList();
                 PckFileDirTextBox.Text = string.Join(" ", ofd.SafeFileNames);
             }
             UpdateCanExportStatus();
@@ -88,7 +97,7 @@ namespace genshin_audio_exporter
             CommonFileDialogResult fbdResult = fbd.ShowDialog();
             if (fbdResult == CommonFileDialogResult.Ok)
             {
-                AppVariables.OutputDir = fbd.FileName;
+                OutputDir = fbd.FileName;
                 OutputDirTextBox.Text = fbd.FileName;
             }
             UpdateCanExportStatus();
@@ -104,26 +113,25 @@ namespace genshin_audio_exporter
         {
             bool canExport = true;
 
-            AppVariables.ExportFormats["wav"] = FormatWavCheckBox.Checked;
-            AppVariables.ExportFormats["mp3"] = FormatMp3CheckBox.Checked;
-            AppVariables.ExportFormats["ogg"] = FormatOggCheckBox.Checked;
-            AppVariables.ExportFormats["flac"] = FormatFlacCheckBox.Checked;
+            ExportFormats["wav"] = FormatWavCheckBox.Checked;
+            ExportFormats["mp3"] = FormatMp3CheckBox.Checked;
+            ExportFormats["ogg"] = FormatOggCheckBox.Checked;
+            ExportFormats["flac"] = FormatFlacCheckBox.Checked;
 
-            if(!AppVariables.ExportFormats.Values.Any(fmtChecked => fmtChecked == true))
+            if(!ExportFormats.Values.Any(fmtChecked => fmtChecked == true))
                 canExport = false;
             if (string.IsNullOrEmpty(PckFileDirTextBox.Text) || !Directory.Exists(OutputDirTextBox.Text))
                 canExport = false;
             if (canExport)
             {
-                Properties.Settings.Default.CreateWav = AppVariables.ExportFormats["wav"];
-                Properties.Settings.Default.CreateMp3 = AppVariables.ExportFormats["mp3"];
-                Properties.Settings.Default.CreateOgg = AppVariables.ExportFormats["ogg"];
-                Properties.Settings.Default.CreateFlac = AppVariables.ExportFormats["flac"];
+                Properties.Settings.Default.CreateWav = ExportFormats["wav"];
+                Properties.Settings.Default.CreateMp3 = ExportFormats["mp3"];
+                Properties.Settings.Default.CreateOgg = ExportFormats["ogg"];
+                Properties.Settings.Default.CreateFlac = ExportFormats["flac"];
 
-                AppVariables.OutputDir = OutputDirTextBox.Text;
+                OutputDir = OutputDirTextBox.Text;
                 Properties.Settings.Default.OutputDirectory = OutputDirTextBox.Text;
                 ExportButton.Enabled = canExport;
-                AppVariables.UpdateProcessingFolder();
             }
             else
                 ExportButton.Enabled = false;
@@ -136,10 +144,21 @@ namespace genshin_audio_exporter
                 isBusy = true;
                 try
                 {
+                    exporter.CleanFromMissingFiles(ref PckFiles);
+                    if (PckFiles.Count == 0)
+                    {
+                        logger.Warn("Task has been aborted, no .PCK files to process");
+                        PckFileDirTextBox.Clear();
+                        return;
+                    }
                     exportTokenSource = new CancellationTokenSource();
-                    await Export(exportTokenSource.Token);
+                    int wavCount = await Export(
+                        PckFiles,
+                        OutputDir,
+                        GetFormatsToExport(),
+                        exportTokenSource.Token);
                     logger.Info("");
-                    logger.Info($"{exporter.exportedAudioFiles} audio files have been exported ({AppVariables.WavFiles.Count} unique sounds)");
+                    logger.Info($"{exporter.exportedAudioFiles} audio files have been exported ({wavCount} unique sounds)");
                     logger.Info("");
                 }
                 catch (OperationCanceledException)
@@ -147,6 +166,11 @@ namespace genshin_audio_exporter
                     logger.Info("");
                     logger.Info($"Task has been aborted, {exporter.exportedAudioFiles} audio files were exported");
                     logger.Info("");
+                    exporter.KillProcesses();
+                }
+                catch(Exception ex)
+                {
+                    logger.Error(ex.Message);
                 }
                 finally
                 {
@@ -156,7 +180,8 @@ namespace genshin_audio_exporter
                     ExportButton.Enabled = true;
                     ExportButton.Text = "Export";
                     SettingsGroupBox.Enabled = true;
-                    ClearTempDirectories();
+                    exporter.KillProcesses();
+                    exporter.ClearTempDirectories();
                     isBusy = false;
                     exporter.exportedAudioFiles = 0;
                 }
@@ -171,133 +196,67 @@ namespace genshin_audio_exporter
             Application.DoEvents();
         }
 
-        private async Task Export(CancellationToken? ct)
+        private List<string> GetFormatsToExport()
+        {
+            return ExportFormats.Where(fmt => fmt.Value == true).Select(x => x.Key).ToList();
+        }
+
+        private async Task<int> Export(List<string> PckFiles, string OutputDir, ICollection<string> ExportFormats, CancellationToken? ct)
         {
             ExportButton.Text = "Abort";
             SettingsGroupBox.Enabled = false;
-            Directory.CreateDirectory(AppVariables.ProcessingDir);
-            Directory.CreateDirectory(AppVariables.LibsDir);
-            ClearTempDirectories();
             StatusTextBox.Clear();
-            if (!AppResources.IsUnpacked)
-            {
-                logger.Info("Unpacking libraries");
-                logger.Info("");
-                await Task.Run(() =>
-                {
-                    AppResources.UnpackResources();
-                });
-            }
             OverallExportProgressBar.Value = 0;
             OverallExportProgressBar.Style = ProgressBarStyle.Marquee;
             CurrentExportProgressBar.Value = 0;
             CurrentExportProgressBar.Maximum = 0;
-            int overallIndex = 0;
-            CheckMissingFiles();
-            if (AppVariables.PckFiles.Count == 0)
-            {
-                logger.Warn("No .PCK files to process");
-                return;
-            }
-            Directory.CreateDirectory(AppVariables.ProcessingDir);
-            Directory.CreateDirectory(Path.Combine(AppVariables.ProcessingDir, "wem"));
-            foreach (var format in AppVariables.ExportFormats)
-            {
-                if (format.Value)
-                {
-                    Directory.CreateDirectory(Path.Combine(AppVariables.ProcessingDir, format.Key));
-                }
-            }
+
+            exporter.OutputDir = OutputDir;
+            exporter.ProcessingDir = Path.Combine(OutputDir, "processing");
+            Directory.CreateDirectory(exporter.ProcessingDir);
+            exporter.KillProcesses();
+            await exporter.UnpackLibs();
 
             ct?.ThrowIfCancellationRequested();
+
             IProgress<int> progress = new Progress<int>(value =>
             {
-                CurrentExportProgressBar.Maximum = AppVariables.PckFiles.Count;
+                CurrentExportProgressBar.Maximum = PckFiles.Count;
                 CurrentExportProgressBar.Value = value;
             });
-            await exporter.ExportPcksToWem(progress, ct);
+            
+            await exporter.ExportPcksToWem(PckFiles, progress, ct);
 
             ct?.ThrowIfCancellationRequested();
-            AppVariables.WemFiles = Directory.GetFiles(Path.Combine(AppVariables.ProcessingDir, "wem"), "*.wem").ToList();
-            OverallExportProgressBar.Style = ProgressBarStyle.Blocks;
-            int overallMaximum = AppVariables.WemFiles.Count;
-            foreach (CheckBox formatCheckBox in SettingsGroupBox.Controls.OfType<CheckBox>())
-            {
-                if (formatCheckBox.Checked)
-                    overallMaximum += AppVariables.WemFiles.Count;
-            }
-            OverallExportProgressBar.Maximum = overallMaximum;
+
+            List<string> WemFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wem"), "*.wem").ToList();
+            int overallIndex = 0;
+
             progress = new Progress<int>(value =>
             {
-                CurrentExportProgressBar.Maximum = AppVariables.WemFiles.Count;
+                CurrentExportProgressBar.Maximum = WemFiles.Count;
                 CurrentExportProgressBar.Value = value;
+                OverallExportProgressBar.Style = ProgressBarStyle.Blocks;
+                OverallExportProgressBar.Maximum = WemFiles.Count * (ExportFormats.Count + 1);
                 OverallExportProgressBar.Value = overallIndex;
             });
-            await exporter.ExportWemsToWavs(overallIndex, progress, ct);
 
-            AppVariables.WavFiles = Directory.GetFiles(Path.Combine(AppVariables.ProcessingDir, "wav"), "*.wav").ToList();
+            int wavCount = await exporter.ExportWemsToWavs(WemFiles, overallIndex, progress, ct);
 
-            foreach (var format in AppVariables.ExportFormats)
+            List<string> WavFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wav"), "*.wav").ToList();
+            foreach (var format in ExportFormats)
             {
                 ct?.ThrowIfCancellationRequested();
-                if (format.Value)
+                progress = new Progress<int>(value =>
                 {
-                    progress = new Progress<int>(value =>
-                    {
-                        CurrentExportProgressBar.Maximum = AppVariables.WavFiles.Count;
-                        CurrentExportProgressBar.Value = value;
-                        OverallExportProgressBar.Value = overallIndex;
-                    });
-                    await exporter.ExportAudioFormat(format.Key, progress, ct);
-                }
-            }
-        }
-
-        private void CheckMissingFiles()
-        {
-            List<string> missingFiles = new List<string>();
-            foreach (string filePath in AppVariables.PckFiles)
-            {
-                if (!File.Exists(filePath))
-                {
-                    missingFiles.Add(filePath);
-                }
-            }
-            if (missingFiles.Count == AppVariables.PckFiles.Count)
-            {
-                MessageBox.Show(this, "All .PCK files are missing", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                PckFileDirTextBox.Clear();
-            }
-            else if (missingFiles.Count > 0)
-            {
-                MessageBox.Show(this, "The following .PCK files are missing:\n\n" + string.Join("\n", missingFiles), "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            foreach (string missingFile in missingFiles)
-            {
-                AppVariables.PckFiles.Remove(missingFile);
-            }
-        }
-
-        private void ClearTempDirectories()
-        {
-            string[] processesToKill = new string[] { "quickbms", "vgmstream-cli", "ffmpeg" };
-            foreach (var processName in processesToKill)
-            {
-                try
-                {
-                    while (Process.GetProcessesByName(processName).Length > 0)
-                        foreach (var process in Process.GetProcessesByName(processName))
-                            process.Kill();
-                }
-                catch (Win32Exception)
-                {
-                    logger.Warn($"Couldn't stop process \"{processName}\", please stop it manually.");
-                }
+                    CurrentExportProgressBar.Maximum = WavFiles.Count;
+                    CurrentExportProgressBar.Value = value;
+                    OverallExportProgressBar.Value = overallIndex;
+                });
+                await exporter.ExportAudioFormat(WavFiles, format, progress, ct);
             }
 
-            DirectoryInfo processingDir = new DirectoryInfo(AppVariables.ProcessingDir);
-            foreach (FileInfo file in processingDir.GetFiles()) file.Delete();
-            foreach (DirectoryInfo subDirectory in processingDir.GetDirectories()) subDirectory.Delete(true);
+            return wavCount;
         }
 
         private void CloseApplication(object sender, FormClosingEventArgs e)
@@ -308,12 +267,7 @@ namespace genshin_audio_exporter
             if (isBusy)
                 ExportOrAbort(null, null);
 
-            try
-            {
-                Directory.Delete(AppVariables.LibsDir, true);
-                Directory.Delete(AppVariables.ProcessingDir, true);
-            }
-            catch { }
+            exporter.Dispose();
             Application.DoEvents();
             Environment.Exit(0);
         }        

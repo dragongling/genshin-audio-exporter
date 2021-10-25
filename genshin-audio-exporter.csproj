@@ -73,7 +73,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes\AppResources.cs" />
-    <Compile Include="Classes\AppVariables.cs" />
     <Compile Include="Classes\GenshinExporter.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>

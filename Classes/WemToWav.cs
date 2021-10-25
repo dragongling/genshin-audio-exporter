@@ -7,15 +7,18 @@ using System.Windows.Forms;
 
 namespace genshin_audio_exporter
 {
-    public static class WemToWav
+    public class WemToWav
     {
-        public static void StartWemToWav(string inputFile)
+        private readonly string vgmstreamPath;
+
+        public WemToWav(string vgmstreamPath)
+        {
+            this.vgmstreamPath = vgmstreamPath;
+        }
+
+        public void StartWemToWav(string inputFile, string outputFilePath)
         {
             Process wemToWavProcess;
-            string vgmstreamPath = Path.Combine(AppVariables.LibsDir, "vgmstream-cli.exe");
-            string outputFilePath = Path.Combine(AppVariables.ProcessingDir, "wav", Path.GetFileNameWithoutExtension(inputFile) + ".wav");
-            string wavFolder = Path.Combine(AppVariables.ProcessingDir, "wav");
-            Directory.CreateDirectory(wavFolder);
             var startInfo = new ProcessStartInfo(vgmstreamPath)
             {
                 WorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -37,7 +40,6 @@ namespace genshin_audio_exporter
                 {
                     LogManager.GetCurrentClassLogger().Error($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
                     MessageBox.Show($"Could not start vgmstream-cli.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
                 }
             }
         }

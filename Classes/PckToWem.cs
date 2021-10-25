@@ -9,17 +9,22 @@ namespace genshin_audio_exporter
 {
     public class PckToWem
     {
-        public static void StartPckToWem(string inputFile)
+        private readonly string quickBmsPath, waveScanBmsPath;
+
+        public PckToWem(string quickBmsPath, string waveScanBmsPath)
+        {
+            this.quickBmsPath = quickBmsPath;
+            this.waveScanBmsPath = waveScanBmsPath;
+        }
+
+        public void StartPckToWem(string inputFile, string outputDirectory)
         {
             Process pckToWemProcess;
-            string quickBmsPath = Path.Combine(AppVariables.LibsDir, "quickbms.exe");
-            string waveScanBms = Path.Combine(AppVariables.LibsDir, "wavescan.bms");
-            string wemFolder = Path.Combine(AppVariables.ProcessingDir, "wem");
-            Directory.CreateDirectory(wemFolder);
+            Directory.CreateDirectory(outputDirectory);
             var startInfo = new ProcessStartInfo(quickBmsPath)
             {
                 WorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                Arguments = $"\"{waveScanBms}\" \"{inputFile}\" \"{wemFolder}\"",
+                Arguments = $"\"{waveScanBmsPath}\" \"{inputFile}\" \"{outputDirectory}\"",
                 CreateNoWindow = true,
                 UseShellExecute = false,
             };
@@ -30,14 +35,12 @@ namespace genshin_audio_exporter
                 {
                     pckToWemProcess.StartInfo = startInfo;
                     pckToWemProcess.Start();
-
                     pckToWemProcess.WaitForExit();
                 }
                 catch (Exception ex)
                 {
                     LogManager.GetCurrentClassLogger().Error($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.");
                     MessageBox.Show($"Could not start quickbms.exe process:\n\n{ex.Message}\n\nIn case of a permissions issue try running this program as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
                 }
             }
         }

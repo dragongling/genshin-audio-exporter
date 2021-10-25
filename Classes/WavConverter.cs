@@ -3,14 +3,19 @@ using System.IO;
 
 namespace genshin_audio_exporter
 {
-    public static class WavConverter
+    public class WavConverter
     {
-        private static string ffmpegPath = Path.Combine(AppVariables.LibsDir, "ffmpeg.exe");
-        public static void ConvertWav(string inputFilePath, string format)
+        private readonly string ffmpegPath;
+
+        public WavConverter(string ffmpegPath)
+        {
+            this.ffmpegPath = ffmpegPath;
+        }
+
+        public void ConvertWav(string inputFilePath, string outputFilePath, string format)
         {
             Process wavConvertProc;
             ProcessStartInfo startInfo = new ProcessStartInfo();
-            string outputFilePath = Path.Combine(AppVariables.ProcessingDir, format, Path.GetFileNameWithoutExtension(inputFilePath) + $".{format}");
             switch (format)
             {
                 case "mp3":
