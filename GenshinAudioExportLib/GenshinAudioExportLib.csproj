@@ -2,10 +2,30 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Company>Open Source Software</Company>
+    <Authors>Dirk Vingerhoeds, Alexander Slesarenko</Authors>
+    <PackageLicenseFile></PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/dragongling/genshin-audio-exporter</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dragongling/genshin-audio-exporter</RepositoryUrl>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl />
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <Description>A library for exporting Genshin Impact audio data</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.7.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

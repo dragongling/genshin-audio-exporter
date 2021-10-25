@@ -245,7 +245,7 @@ namespace genshin_audio_exporter
                 OverallExportProgressBar.Value = overallIndex;
             });
 
-            int wavCount = await exporter.ExportWemsToWavs(WemFiles, overallIndex);
+            int wavCount = await exporter.ExportWemsToWavs(overallIndex);
 
             List<string> WavFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wav"), "*.wav").ToList();
             foreach (var format in ExportFormats)
@@ -257,7 +257,7 @@ namespace genshin_audio_exporter
                     CurrentExportProgressBar.Value = value;
                     OverallExportProgressBar.Value = overallIndex;
                 });
-                await exporter.ExportAudioFormat(WavFiles, format);
+                await exporter.ExportAudioFormat(format);
             }
 
             return wavCount;

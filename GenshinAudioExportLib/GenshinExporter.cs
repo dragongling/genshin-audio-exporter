@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -149,6 +150,18 @@ namespace GenshinAudioExportLib
         }
 
         /// <summary>
+        /// Unpacks <see href="https://en.wikipedia.org/wiki/Audiokinetic_Wwise">WEM</see> containers 
+        /// to <see href="https://en.wikipedia.org/wiki/WAV">WAV</see> files into <see cref="OutputDir"/> directory
+        /// </summary>
+        /// <param name="overallIndex">Index of an overall export process</param>
+        /// <returns>Amount of </returns>
+        public async Task<int> ExportWemsToWavs(int overallIndex)
+        {
+            List<string> wemFiles = Directory.GetFiles(Path.Combine(ProcessingDir, "wem"), "*.wem").ToList();
+            return await ExportWemsToWavs(wemFiles, overallIndex);
+        }
+
+        /// <summary>
         /// Converts WAV files into audio format defined in <paramref name="format"/> param
         /// </summary>
         /// <param name="wavFiles">Collection of input WAV file paths</param>
@@ -191,10 +204,22 @@ namespace GenshinAudioExportLib
         /// Converts WAV files into audio format defined in <paramref name="format"/> param into <see cref="OutputDir"/> directory
         /// </summary>
         /// <param name="wavFiles">Collection of input WAV file paths</param>
-        /// <param name="outputDir">Output directory path</param>
+        /// <param name="format">Audio format that is supported by <see cref="WavConverter"/></param>
         /// <returns></returns>
         public async Task ExportAudioFormat(ICollection<string> wavFiles, string format)
         {
+            await ExportAudioFormat(wavFiles, OutputDir, format);
+        }
+
+
+        /// <summary>
+        /// Converts WAV files into audio format defined in <paramref name="format"/> param 
+        /// from <see cref="ProcessingDir"/> directory into <see cref="OutputDir"/> directory
+        /// </summary>
+        /// <param name="format">Audio format that is supported by <see cref="WavConverter"/></param>
+        public async Task ExportAudioFormat(string format)
+        {
+            List<string> wavFiles = Directory.GetFiles(Path.Combine(ProcessingDir, "wav"), "*.wav").ToList();
             await ExportAudioFormat(wavFiles, OutputDir, format);
         }
 
