@@ -223,7 +223,7 @@ namespace genshin_audio_exporter
 
             ct?.ThrowIfCancellationRequested();
 
-            exporter.progress = new Progress<int>(value =>
+            exporter.Progress = new Progress<int>(value =>
             {
                 CurrentExportProgressBar.Maximum = PckFiles.Count;
                 CurrentExportProgressBar.Value = value;
@@ -236,7 +236,7 @@ namespace genshin_audio_exporter
             List<string> WemFiles = Directory.GetFiles(Path.Combine(exporter.ProcessingDir, "wem"), "*.wem").ToList();
             int overallIndex = 0;
 
-            exporter.progress = new Progress<int>(value =>
+            exporter.Progress = new Progress<int>(value =>
             {
                 CurrentExportProgressBar.Maximum = WemFiles.Count;
                 CurrentExportProgressBar.Value = value;
@@ -251,7 +251,7 @@ namespace genshin_audio_exporter
             foreach (var format in ExportFormats)
             {
                 ct?.ThrowIfCancellationRequested();
-                exporter.progress = new Progress<int>(value =>
+                exporter.Progress = new Progress<int>(value =>
                 {
                     CurrentExportProgressBar.Maximum = WavFiles.Count;
                     CurrentExportProgressBar.Value = value;
