@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace genshin_audio_exporter.Properties {
+namespace genshin_audio_exporter.Forms {
     using System;
     
     
@@ -22,14 +22,14 @@ namespace genshin_audio_exporter.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class Resources {
+    public class MainForm {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() {
+        internal MainForm() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace genshin_audio_exporter.Properties {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("genshin_audio_exporter.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("genshin_audio_exporter.Forms.MainForm", typeof(MainForm).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,49 +61,12 @@ namespace genshin_audio_exporter.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Abort.
+        ///   Looks up a localized resource of type System.Drawing.Point similar to {X=17,Y=17}.
         /// </summary>
-        public static string ExportButtonTextAbort {
+        public static System.Drawing.Point ExportProgressToolTip_TrayLocation {
             get {
-                return ResourceManager.GetString("ExportButtonTextAbort", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Aborting....
-        /// </summary>
-        public static string ExportButtonTextAborting {
-            get {
-                return ResourceManager.GetString("ExportButtonTextAborting", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Export.
-        /// </summary>
-        public static string ExportButtonTextDefault {
-            get {
-                return ResourceManager.GetString("ExportButtonTextDefault", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        public static System.Drawing.Icon icon {
-            get {
-                object obj = ResourceManager.GetObject("icon", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] libs {
-            get {
-                object obj = ResourceManager.GetObject("libs", resourceCulture);
-                return ((byte[])(obj));
+                object obj = ResourceManager.GetObject("ExportProgressToolTip.TrayLocation", resourceCulture);
+                return ((System.Drawing.Point)(obj));
             }
         }
         
@@ -113,16 +76,6 @@ namespace genshin_audio_exporter.Properties {
         public static string PckFilesFilter {
             get {
                 return ResourceManager.GetString("PckFilesFilter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] svnzip {
-            get {
-                object obj = ResourceManager.GetObject("svnzip", resourceCulture);
-                return ((byte[])(obj));
             }
         }
     }

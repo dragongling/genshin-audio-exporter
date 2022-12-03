@@ -78,7 +78,7 @@ namespace genshin_audio_exporter
         {
             var ofd = new OpenFileDialog
             {
-                Filter = "PCK files (*.pck)|*.pck",
+                Filter = GetString("PckFilesFilter"),
                 Multiselect = true
             };
             var ofdResult = ofd.ShowDialog();
@@ -179,7 +179,7 @@ namespace genshin_audio_exporter
                     OverallExportProgressBar.Value = 0;
                     OverallExportProgressBar.Style = ProgressBarStyle.Blocks;
                     ExportButton.Enabled = true;
-                    ExportButton.Text = "Export";
+                    ExportButton.Text = GetString("ExportButtonTextDefault");
                     SettingsGroupBox.Enabled = true;
                     _exporter.KillProcesses();
                     _exporter.ClearTempDirectories();
@@ -190,7 +190,7 @@ namespace genshin_audio_exporter
             else
             {
                 _exportTokenSource.Cancel();
-                ExportButton.Text = "Aborting...";
+                ExportButton.Text = GetString("ExportButtonTextAborting");
                 ExportButton.Enabled = false;
                 return;
             }
@@ -208,7 +208,7 @@ namespace genshin_audio_exporter
             ICollection<string> exportFormats, 
             CancellationToken? ct)
         {
-            ExportButton.Text = "Abort";
+            ExportButton.Text = GetString("ExportButtonTextAbort");
             SettingsGroupBox.Enabled = false;
             StatusTextBox.Clear();
             OverallExportProgressBar.Value = 0;
@@ -287,6 +287,11 @@ namespace genshin_audio_exporter
             _exporter.Dispose();
             Application.DoEvents();
             Environment.Exit(0);
-        }        
+        }
+
+        private static string GetString(string name)
+        {
+            return Properties.Resources.ResourceManager.GetString(name);
+        }
     }
 }
