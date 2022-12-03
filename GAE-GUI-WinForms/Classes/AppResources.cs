@@ -1,25 +1,22 @@
 ﻿using System.IO;
-using System.Reflection;
 using SevenZipExtractor;
 
 namespace genshin_audio_exporter
 {
     public static class AppResources
     {
-        private static bool isUnpacked = false;
-
-        public static bool IsUnpacked { get => isUnpacked; set => isUnpacked = value; }
+        public static bool IsUnpacked { get; set; }
 
         public static void UnpackResources()
         {
             if (!IsUnpacked)
             {
-                string zipPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "libs.zip");
-                string unzipPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "7z.dll");
+                var zipPath = Path.Combine(Program.GetAppLocation(), "libs.zip");
+                var unzipPath = Path.Combine(Program.GetAppLocation(), "7z.dll");
                 File.WriteAllBytes(zipPath, Properties.Resources.libs);
                 File.WriteAllBytes(unzipPath, Properties.Resources.svnzip);
 
-                using (ArchiveFile archiveFile = new ArchiveFile(zipPath, unzipPath))
+                using (var archiveFile = new ArchiveFile(zipPath, unzipPath))
                 {
                     archiveFile.Extract(Path.GetDirectoryName(zipPath));
                 }

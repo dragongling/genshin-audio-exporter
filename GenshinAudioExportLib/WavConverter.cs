@@ -2,13 +2,13 @@
 
 namespace GenshinAudioExportLib
 {
-    class WavConverter
+    internal class WavConverter
     {
-        private readonly string ffmpegPath;
+        private readonly string _ffmpegPath;
 
         public WavConverter(string ffmpegPath)
         {
-            this.ffmpegPath = ffmpegPath;
+            _ffmpegPath = ffmpegPath;
         }
 
         public void ConvertWav(string inputFilePath, string outputFilePath, string format)
@@ -18,7 +18,7 @@ namespace GenshinAudioExportLib
             switch (format)
             {
                 case "mp3":
-                    startInfo = new ProcessStartInfo(ffmpegPath)
+                    startInfo = new ProcessStartInfo(_ffmpegPath)
                     {
                         Arguments = $"-i \"{inputFilePath}\" -y -b:a 320k \"{outputFilePath}\"",
                         CreateNoWindow = true,
@@ -26,7 +26,7 @@ namespace GenshinAudioExportLib
                     };
                     break;
                 case "ogg":
-                    startInfo = new ProcessStartInfo(ffmpegPath)
+                    startInfo = new ProcessStartInfo(_ffmpegPath)
                     {
                         Arguments = $"-i \"{inputFilePath}\" -y -acodec libvorbis -qscale:a 10 \"{outputFilePath}\"",
                         CreateNoWindow = true,
@@ -34,7 +34,7 @@ namespace GenshinAudioExportLib
                     };
                     break;
                 case "flac":
-                    startInfo = new ProcessStartInfo(ffmpegPath)
+                    startInfo = new ProcessStartInfo(_ffmpegPath)
                     {
                         Arguments = $"-i \"{inputFilePath}\" -y -af aformat=s16:44100 \"{outputFilePath}\"",
                         CreateNoWindow = true,

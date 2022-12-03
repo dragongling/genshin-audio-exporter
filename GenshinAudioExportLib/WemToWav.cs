@@ -4,19 +4,19 @@ using System.Diagnostics;
 
 namespace GenshinAudioExportLib
 {
-    class WemToWav
+    internal class WemToWav
     {
-        private readonly string vgmstreamPath;
+        private readonly string _vgmstreamPath;
 
         public WemToWav(string vgmstreamPath)
         {
-            this.vgmstreamPath = vgmstreamPath;
+            _vgmstreamPath = vgmstreamPath;
         }
 
         public void StartWemToWav(string inputFile, string outputFilePath)
         {
             Process wemToWavProcess;
-            var startInfo = new ProcessStartInfo(vgmstreamPath)
+            var startInfo = new ProcessStartInfo(_vgmstreamPath)
             {
                 Arguments = $"-o \"{outputFilePath}\" \"{inputFile}\"",
                 CreateNoWindow = true,

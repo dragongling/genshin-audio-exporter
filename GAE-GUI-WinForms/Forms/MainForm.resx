@@ -247,4 +247,7 @@
         AAD//4H//4AAAP//gf//gAAA///D//+AAAD//////4AAAA==
 </value>
   </data>
+  <data name="PckFilesFilter" xml:space="preserve">
+	  <value>PCK files (*.pck)|*.pck</value>
+  </data>
 </root>

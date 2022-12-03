@@ -5,23 +5,23 @@ using System.IO;
 
 namespace GenshinAudioExportLib
 {
-    class PckToWem
+    internal class PckToWem
     {
-        private readonly string quickBmsPath, waveScanBmsPath;
+        private readonly string _quickBmsPath, _waveScanBmsPath;
 
         public PckToWem(string quickBmsPath, string waveScanBmsPath)
         {
-            this.quickBmsPath = quickBmsPath;
-            this.waveScanBmsPath = waveScanBmsPath;
+            _quickBmsPath = quickBmsPath;
+            _waveScanBmsPath = waveScanBmsPath;
         }
 
         public void StartPckToWem(string inputFile, string outputDirectory)
         {
             Process pckToWemProcess;
             Directory.CreateDirectory(outputDirectory);
-            var startInfo = new ProcessStartInfo(quickBmsPath)
+            var startInfo = new ProcessStartInfo(_quickBmsPath)
             {
-                Arguments = $"\"{waveScanBmsPath}\" \"{inputFile}\" \"{outputDirectory}\"",
+                Arguments = $"\"{_waveScanBmsPath}\" \"{inputFile}\" \"{outputDirectory}\"",
                 CreateNoWindow = true,
                 UseShellExecute = false,
             };

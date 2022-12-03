@@ -48,7 +48,7 @@ namespace GenshinAudioExportLib
         private readonly PckToWem _pckToWem;
         private readonly WemToWav _wemToWav;
         private readonly WavConverter _wavConverter;
-        private static string _libsDir;
+        private readonly string _libsDir;
 
 
         /// <summary>
@@ -271,9 +271,17 @@ namespace GenshinAudioExportLib
                 pckFiles.Remove(missingFile);
             }
         }
-
+        
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing) 
+                return;
             try
             {
                 KillProcesses();
